@@ -41,6 +41,48 @@ slopediff <- function(i, xx, yy, n){
 }
 
 #function for final dataframe used in recurrence_int and exceedance
+# final_df  = function(site) {
+#   
+#   (test.site = mapping[site,])
+#   
+#   nwm_flow <- data.frame(
+#     time = as.POSIXct(var.get.nc(nwm, "time"), origin = "1970-01-01", tz = 'UTC'),
+#     Q    = var.get.nc(nwm, "streamflow",
+#                       start = c(1, test.site$nwm_retro_id), 
+#                       count = c(NA, 1),
+#                       unpack = TRUE)) %>%
+#     group_by(date   = as.Date(time)) %>%
+#     summarise(nwm_cms = mean(Q), comid = test.site$feature_id)
+#   
+#   usgs_flow = data.frame(
+#     date = as.Date(var.get.nc(nwis, "time"), origin = "1970-01-01", tz = 'UTC'),
+#     nwis_cms    = var.get.nc(nwis, "streamflow",
+#                              start = c(1, test.site$nwis_retro_id), 
+#                              count = c(NA, 1),
+#                              unpack = TRUE),
+#     site_id = test.site$site_no)
+#   
+#   merge(nwm_flow, usgs_flow, by = "date") %>% 
+#     select(comid, date, nwm_cms, nwis_cms) %>% 
+#     na.omit()
+# }
+
+#function for l used in recurrence_int and exceedance
+# build_l = function(site) {
+#   final = final_df(site)
+#   finalPeak = final %>% 
+#     group_by(year  = format(date, "%Y")) %>% 
+#     summarize(NWM  = log(max(nwm_cms)), 
+#               NWIS = log(max(nwis_cms))) %>% 
+#     tidyr::pivot_longer(-year) %>% 
+#     group_by(name) %>% 
+#     summarise(m = mean(value), s = sd(value), g = e1071::skewness(value, type=2))
+#   
+#   lapply(1:2, function(x){ exp(finalPeak$m[x] + finalPeak$s[x] * Ky_gamma(finalPeak$g[x], 1/yr))}) 
+# }
+
+
+#edit to final_df: returns null if the dataframe is full of null values for nwis_cms or nwm_cms
 final_df  = function(site) {
   
   (test.site = mapping[site,])
@@ -62,24 +104,38 @@ final_df  = function(site) {
                              unpack = TRUE),
     site_id = test.site$site_no)
   
-  merge(nwm_flow, usgs_flow, by = "date") %>% 
+  final = merge(nwm_flow, usgs_flow, by = "date") %>% 
     select(comid, date, nwm_cms, nwis_cms) %>% 
     na.omit()
+  
+  if(nrow(final) == 0){
+    return(NaN)
+  } else{
+    return(final)
+  }
 }
 
-#function for l used in recurrence_int and exceedance
+#edit to build_l: returns null if there is a null value in finalPeak
 build_l = function(site) {
   final = final_df(site)
-  finalPeak = final %>% 
-    group_by(year  = format(date, "%Y")) %>% 
-    summarize(NWM  = log(max(nwm_cms)), 
-              NWIS = log(max(nwis_cms))) %>% 
-    tidyr::pivot_longer(-year) %>% 
-    group_by(name) %>% 
-    summarise(m = mean(value), s = sd(value), g = e1071::skewness(value, type=2))
-  
-  lapply(1:2, function(x){ exp(finalPeak$m[x] + finalPeak$s[x] * Ky_gamma(finalPeak$g[x], 1/yr))}) 
+  df = data.frame(final)
+  if(is.na(df[1,1])){
+    print(NaN)
+  } else{
+    finalPeak = final %>% 
+      group_by(year  = format(date, "%Y")) %>% 
+      summarize(NWM  = log(max(nwm_cms)), 
+                NWIS = log(max(nwis_cms))) %>% 
+      tidyr::pivot_longer(-year) %>% 
+      group_by(name) %>% 
+      summarise(m = mean(value), s = sd(value), g = e1071::skewness(value, type=2))
+    
+    if(NaN %in% finalPeak[2,] | NaN %in% finalPeak[1,]){
+      return(NaN)
+    } else{
+      lapply(1:2, function(x){ exp(finalPeak$m[x] + finalPeak$s[x] * Ky_gamma(finalPeak$g[x], 1/yr))})
+    }
+  }
 }
-
 
 
