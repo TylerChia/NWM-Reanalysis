@@ -109,7 +109,7 @@ final_df  = function(site) {
     na.omit()
   
   if(nrow(final) == 0){
-    return(NaN)
+    return(NULL)
   } else{
     return(final)
   }
@@ -119,8 +119,8 @@ final_df  = function(site) {
 build_l = function(site) {
   final = final_df(site)
   df = data.frame(final)
-  if(is.na(df[1,1])){
-    print(NaN)
+  if(is.null(df[1,1])){
+    print(NULL)
   } else{
     finalPeak = final %>% 
       group_by(year  = format(date, "%Y")) %>% 
@@ -130,8 +130,8 @@ build_l = function(site) {
       group_by(name) %>% 
       summarise(m = mean(value), s = sd(value), g = e1071::skewness(value, type=2))
     
-    if(NaN %in% finalPeak[2,] | NaN %in% finalPeak[1,]){
-      return(NaN)
+    if(NaN %in% finalPeak$m | NaN %in% finalPeak$s){
+      return(NULL)
     } else{
       lapply(1:2, function(x){ exp(finalPeak$m[x] + finalPeak$s[x] * Ky_gamma(finalPeak$g[x], 1/yr))})
     }
