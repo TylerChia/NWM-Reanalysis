@@ -31,7 +31,7 @@ Ky_gamma <- function(g, aep){
 }
 
 #set years
-yr = c(2,10,25,100)
+yr = c(1.5,2,5,10,25,50,100,250,500)
 
 #function for slope used in recurrence_int
 slopediff <- function(i, xx, yy, n){
@@ -108,7 +108,7 @@ final_df  = function(site) {
     select(comid, date, nwm_cms, nwis_cms) %>% 
     na.omit()
   
-  if(nrow(final) == 0){
+  if(nrow(final) < 3650){
     return(NULL)
   } else{
     return(final)

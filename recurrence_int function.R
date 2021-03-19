@@ -111,10 +111,15 @@ recurrence_int = function(site) {
         rbind(df, change_int) 
       
       colnames(df) = c(
+        "yr001",
         "yr002",
+        "yr005",
         "yr010",
         "yr025",
-        "yr100"
+        "yr050",
+        "yr100",
+        "yr250",
+        "yr500"
       )
       
       df = cbind(Model = c("NWIS", "NWM", "Norm"), df)
@@ -140,11 +145,11 @@ recurrence_int = function(site) {
       # slope1  <- median(slopes[is.finite(slopes)])
       # 
       # df = cbind(sens = c(slope1, slope, NA), df)
-      df = df[, c(6,7,1,2,3,4,5)]
+      df = df[, c(11,12,1,2,3,4,5,6,7,8,9,10)]
       
-      df1 = df %>% 
-        select(COMID, NWIS_ID, Model, yr002, yr010, yr025, yr100)
-      df1 = df1 %>% 
+      # df1 = df %>% 
+      #   select(COMID, NWIS_ID, Model, yr002, yr010, yr025, yr100)
+      df = df %>% 
         tidyr::pivot_longer(
           cols = starts_with("yr"),
           names_to = "Type",
@@ -179,7 +184,7 @@ recurrence_int = function(site) {
       # 
       # df5 = rbind(df1, df2, df3, df4)
       
-      return(df1)
+      return(df)
     }
   }
 }
